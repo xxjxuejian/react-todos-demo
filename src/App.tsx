@@ -76,6 +76,16 @@ function App() {
   // 计算是否有已完成的任务（用于控制按钮显示）
   const completedCount = todos.length - activeCount;
 
+  // 更新todo内容
+  const updateTodo = (id: string, title: string) => {
+    const todo = todos.find((todo) => todo.id === id);
+    console.log("编辑id", todo, id, title);
+    if (todo) {
+      todo.title = title;
+    }
+    setTodos([...todos]);
+  };
+
   return (
     <>
       <div className="todoapp">
@@ -89,6 +99,7 @@ function App() {
               onToggleTodo={toggleTodo}
               onRemoveTodo={removeTodo}
               onToggleAll={toggleAll}
+              onUpdateTodo={updateTodo}
             />
             <Footer
               count={activeCount}

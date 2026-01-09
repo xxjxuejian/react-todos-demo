@@ -8,6 +8,7 @@ interface TodoListProps {
   onToggleTodo: (id: string) => void; // 👈 新增类型定义
   onRemoveTodo: (id: string) => void; // 👈 增加类型
   onToggleAll: (completed: boolean) => void; // 👈 增加类型
+  onUpdateTodo: (id: string, title: string) => void;
 }
 
 const TodoList: React.FC<TodoListProps> = ({
@@ -15,11 +16,10 @@ const TodoList: React.FC<TodoListProps> = ({
   onToggleTodo,
   onRemoveTodo,
   onToggleAll,
+  onUpdateTodo,
 }) => {
   return (
     <section className="main">
-      {/* <input id="toggle-all" className="toggle-all" type="checkbox" />
-      <label htmlFor="toggle-all">Mark all as complete</label> */}
       <div className="toggle-all-container">
         <input
           className="toggle-all"
@@ -41,6 +41,7 @@ const TodoList: React.FC<TodoListProps> = ({
               todo={todo}
               onToggle={onToggleTodo}
               onRemove={onRemoveTodo}
+              onUpdate={onUpdateTodo}
             />
           );
         })}
