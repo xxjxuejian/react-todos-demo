@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { Todo } from "../types/todo";
 
 // 定义组件需要接收的参数（Props），传递过来的是一条todo数据
@@ -16,58 +16,93 @@ const TodoItem: React.FC<TodoItemProps> = ({
   onUpdate,
 }) => {
   const [isEditing, setIsEditing] = useState(false); // 是否处于编辑状态
-  const [tempValue, setTempValue] = useState(""); // 临时存储编辑的值
-  let editId: string | null = null;
+  const [editText, setEditText] = useState(""); // 临时存储编辑的值
+  // 引用输入框 DOM，为了自动聚焦
+  const inputRef = useRef<HTMLInputElement>(null);
+  // 在函数组件中，这不是声明一个全局变量，它在每一次渲染都会被重新创建并重置为 null
+  // let editId: string | null = null;
+  const editId = useRef<string | null>(null);
 
   // 双击标签进入编辑状态
   const handleStartEdit = () => {
     setIsEditing(true);
-    setTempValue(todo.title);
-    editId = todo.id;
-    console.log("editId", editId);
+    setEditText(todo.title);
+    editId.current = todo.id;
+    // console.log("refDOM", inputRef.current); // null
+    // inputRef.current?.focus(); // 自动聚焦输入框
+    console.log("开始编辑", editId.current);
   };
 
-  const handleOnBlur = () => {};
+  const handleOnBlur = () => {
+    const text = editText.trim();
+    if (text && text !== todo.title) {
+      onUpdate(editId.current!, text);
+    } else if (!text) {
+      onRemove(todo.id);
+    }
+    console.log("blurblurblurblur");
+    setIsEditing(false);
+    setEditText("");
+    editId.current = null;
+  };
   const handleUpdate = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      console.log("update", tempValue);
-      console.log("editId", editId); // editId:null?? 原因是什么
-      // onUpdate(editId!, tempValue);
-      // setIsEditing(false);
-      // setTempValue("");
-      // editId = null;
+      console.log("update", editText);
+      console.log("editId", editId.current);
+      onUpdate(editId.current!, editText);
+      setEditText("");
+      setIsEditing(false);
+      editId.current = null;
+    } else if (e.key === "Escape") {
+      setEditText(todo.title);
+      setIsEditing(false);
+      editId.current = null;
     }
   };
 
+  // 自动聚焦 (Focus Management)
+  // 当 isEditing 变为 true 时，我们需要让 input 获得焦点
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current?.focus();
+    }
+  }, [isEditing]);
+
+  /* 
+    className={todo.completed ? "completed" : "" + (isEditing ? " editing" : "")} 这个写法不对
+    className={`${todo.completed ? 'completed' : ''} ${isEditing ? 'editing' : ''}`}
+    需要绑定多个类，类与类是之间需要空格的，那么就要用字符串包裹，但是字符串里面需要写变量，所以需要用模板字符串
+    模板字符串：${}，${expression}内部可以直接嵌入js表达式
+    为什么用两个${}，因为两个类之间需要一个空格分隔
+  */
   return (
-    <li className={`${todo.completed ? "completed" : ""}`}>
+    <li
+      className={`${todo.completed ? "completed" : ""} ${
+        isEditing ? "editing" : ""
+      }`}
+    >
       <div className="view">
-        {isEditing ? (
-          // 编辑状态,才显示这段模板
-          <div className="input-container">
-            <input
-              id="edit-todo-input"
-              type="text"
-              autoFocus
-              onChange={(e) => setTempValue(e.target.value)}
-              onBlur={handleOnBlur}
-              onKeyDown={handleUpdate}
-              value={tempValue}
-            />
-          </div>
-        ) : (
-          <>
-            <input
-              type="checkbox"
-              className="toggle"
-              checked={todo.completed}
-              onChange={() => onToggle(todo.id)}
-            />
-            <label onDoubleClick={handleStartEdit}>{todo.title}</label>
-            <button className="destroy" onClick={() => onRemove(todo.id)} />
-          </>
-        )}
+        <input
+          type="checkbox"
+          className="toggle"
+          checked={todo.completed}
+          onChange={() => onToggle(todo.id)}
+        />
+        <label onDoubleClick={handleStartEdit}>{todo.title}</label>
+        <button className="destroy" onClick={() => onRemove(todo.id)} />
       </div>
+
+      {/* 👇 编辑用的输入框 */}
+      {isEditing && (
+        <input
+          ref={inputRef}
+          className="edit"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={handleOnBlur}
+          onKeyDown={handleUpdate}
+        />
+      )}
     </li>
   );
 };
