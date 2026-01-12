@@ -8,6 +8,8 @@ interface TodoListProps {
   onToggleTodo: (id: string) => void; // 👈 新增类型定义
   onRemoveTodo: (id: string) => void; // 👈 增加类型
   onToggleAll: (completed: boolean) => void; // 👈 增加类型
+  editingId: string | null; // 编辑相关
+  setEditingId: (id: string | null) => void; // 编辑相关
   onUpdateTodo: (id: string, title: string) => void;
 }
 
@@ -17,6 +19,8 @@ const TodoList: React.FC<TodoListProps> = ({
   onRemoveTodo,
   onToggleAll,
   onUpdateTodo,
+  editingId,
+  setEditingId,
 }) => {
   return (
     <section className="main">
@@ -41,6 +45,9 @@ const TodoList: React.FC<TodoListProps> = ({
               todo={todo}
               onToggle={onToggleTodo}
               onRemove={onRemoveTodo}
+              // 👇 判断当前这一行是不是正在编辑状态
+              isEditing={editingId === todo.id}
+              setEditingId={setEditingId}
               onUpdate={onUpdateTodo}
             />
           );

@@ -7,6 +7,8 @@ interface TodoItemProps {
   onToggle: (id: string) => void; // 👈 新增类型定义
   onRemove: (id: string) => void; // 👈 增加类型
   onUpdate: (id: string, title: string) => void;
+  isEditing: boolean; // 是否处于编辑状态
+  setEditingId: (id: string | null) => void; // 设置编辑的id
 }
 
 const TodoItem: React.FC<TodoItemProps> = ({
@@ -14,49 +16,42 @@ const TodoItem: React.FC<TodoItemProps> = ({
   onToggle,
   onRemove,
   onUpdate,
+  isEditing,
+  setEditingId,
 }) => {
-  const [isEditing, setIsEditing] = useState(false); // 是否处于编辑状态
   const [editText, setEditText] = useState(""); // 临时存储编辑的值
-  // 引用输入框 DOM，为了自动聚焦
   const inputRef = useRef<HTMLInputElement>(null);
-  // 在函数组件中，这不是声明一个全局变量，它在每一次渲染都会被重新创建并重置为 null
-  // let editId: string | null = null;
-  const editId = useRef<string | null>(null);
 
   // 双击标签进入编辑状态
   const handleStartEdit = () => {
-    setIsEditing(true);
-    setEditText(todo.title);
-    editId.current = todo.id;
-    // console.log("refDOM", inputRef.current); // null
-    // inputRef.current?.focus(); // 自动聚焦输入框
-    console.log("开始编辑", editId.current);
+    setEditingId(todo.id); // 通知父组件，当前正在编辑的todo id
+    setEditText(todo.title); // 初始化编辑内容
+    console.log("开始编辑");
   };
 
   const handleOnBlur = () => {
+    console.log("blur");
     const text = editText.trim();
-    if (text && text !== todo.title) {
-      onUpdate(editId.current!, text);
-    } else if (!text) {
-      onRemove(todo.id);
+    if (text) {
+      if (text !== todo.title) {
+        onUpdate(todo.id, text);
+      }
+      setEditingId(null);
     }
-    console.log("blurblurblurblur");
-    setIsEditing(false);
-    setEditText("");
-    editId.current = null;
+    // 如果删光了文字，通常视为删除任务
+    else {
+      onRemove(todo.id);
+      setEditingId(null); // 取消编辑状态
+    }
   };
   const handleUpdate = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       console.log("update", editText);
-      console.log("editId", editId.current);
-      onUpdate(editId.current!, editText);
-      setEditText("");
-      setIsEditing(false);
-      editId.current = null;
+      onUpdate(todo.id, editText);
+      setEditingId(null);
     } else if (e.key === "Escape") {
-      setEditText(todo.title);
-      setIsEditing(false);
-      editId.current = null;
+      setEditText(todo.title); // 恢复原状
+      setEditingId(null); // 取消编辑状态
     }
   };
 
