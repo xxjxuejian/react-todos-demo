@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import TodoList from "./components/TodoList";
 import Footer from "./components/Footer";
@@ -9,13 +9,26 @@ import type { Todo, FilterType } from "./types/todo";
 为什么修改数据的函数一定要定义在App中，然后逐层向下传递，可以想vue中那种发送事件给父组件吗？react中没有这种机制
 即使把函数传递子组件中，但是子组件中应该拿不到全部的数据吧
 */
+//   [
+//   { id: "1", title: "学习 React", completed: true },
+//   { id: "2", title: "写一个 TodoMVC", completed: false },
+// ]
 function App() {
   // 1. 定义状态：todos 列表
   // 初始化时尝试读取
-  const [todos, setTodos] = useState<Todo[]>([
-    { id: "1", title: "学习 React", completed: true },
-    { id: "2", title: "写一个 TodoMVC", completed: false },
-  ]);
+  const [todos, setTodos] = useState<Todo[]>(() => {
+    const savedTodos = localStorage.getItem("react-todo-app-data");
+    if (savedTodos) {
+      return JSON.parse(savedTodos) as Todo[];
+    }
+    return [];
+  });
+  /* 
+    新增状态：记录当前正在编辑那个 Todo 的 ID,
+    为什么把editingId, setEditingId放在 App 中？ 因为每一个子组件同时只有一个能处于编辑状态，他们是互斥的，子组件内部自己管理这个状态也可以
+    但是通常我们会把这种互斥的状态提升到它们的共同父组件中进行管理，这样可以确保在任何时刻只有一个 TodoItem 处于编辑状态。
+  */
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // 添加新的todo的方法
   function addTodo(title: string) {
@@ -86,6 +99,11 @@ function App() {
     setTodos([...todos]);
   };
 
+  // 2. 监听 todos 变化，自动保存
+  useEffect(() => {
+    localStorage.setItem("react-todo-app-data", JSON.stringify(todos));
+  }, [todos]); // 依赖项是 todos，只要它变了，就执行里面的代码
+
   return (
     <>
       <div className="todoapp">
@@ -99,6 +117,8 @@ function App() {
               onToggleTodo={toggleTodo}
               onRemoveTodo={removeTodo}
               onToggleAll={toggleAll}
+              editingId={editingId}
+              setEditingId={setEditingId}
               onUpdateTodo={updateTodo}
             />
             <Footer
