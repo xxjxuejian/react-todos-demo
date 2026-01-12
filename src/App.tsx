@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import TodoList from "./components/TodoList";
 import Footer from "./components/Footer";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Todo, FilterType } from "./types/todo";
 
 /* 
@@ -16,13 +17,15 @@ import type { Todo, FilterType } from "./types/todo";
 function App() {
   // 1. 定义状态：todos 列表
   // 初始化时尝试读取
-  const [todos, setTodos] = useState<Todo[]>(() => {
-    const savedTodos = localStorage.getItem("react-todo-app-data");
-    if (savedTodos) {
-      return JSON.parse(savedTodos) as Todo[];
-    }
-    return [];
-  });
+  // const [todos, setTodos] = useState<Todo[]>(() => {
+  //   const savedTodos = localStorage.getItem("react-todo-app-data");
+  //   if (savedTodos) {
+  //     return JSON.parse(savedTodos) as Todo[];
+  //   }
+  //   return [];
+  // });
+  // 使用自定义 Hook 来管理 LocalStorage
+  const [todos, setTodos] = useLocalStorage<Todo[]>("react-todo-app-data", []);
   /* 
     新增状态：记录当前正在编辑那个 Todo 的 ID,
     为什么把editingId, setEditingId放在 App 中？ 因为每一个子组件同时只有一个能处于编辑状态，他们是互斥的，子组件内部自己管理这个状态也可以
@@ -98,11 +101,6 @@ function App() {
     }
     setTodos([...todos]);
   };
-
-  // 2. 监听 todos 变化，自动保存
-  useEffect(() => {
-    localStorage.setItem("react-todo-app-data", JSON.stringify(todos));
-  }, [todos]); // 依赖项是 todos，只要它变了，就执行里面的代码
 
   return (
     <>
